@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8">
+    <title>Додати співробітника</title>
+</head>
+<body>
+<?php include 'menu.php'; ?>
+
+<h3>Форма додавання співробітника</h3>
+
+<form method="post" action="form1.php">
+    <b>Прізвище:</b><br>
+    <input name="lastname" size="30" required minlength="2"><br><br>
+
+    <b>Ім’я:</b><br>
+    <input name="firstname" size="30" required minlength="2"><br><br>
+
+    <b>Посада:</b><br>
+    <input name="position" size="30" required minlength="2"><br><br>
+
+    <b>Телефон:</b><br>
+    <input name="phone" size="20" required
+           pattern="[0-9\+\-\s]{5,20}"><br><br>
+
+    <b>Email:</b><br>
+    <input name="email" type="email" size="30" required><br><br>
+
+    <b>Ім’я файлу фото (наприклад ivanov.jpg):</b><br>
+    <input name="photo" size="30" value="nofoto.jpg" required><br><br>
+
+    <input type="submit" value="Додати">
+</form>
+
+</body>
+</html>
