@@ -1,45 +1,67 @@
 <?php
+// form3.php – пошук + підтвердження видалення співробітника
 include_once 'connecta.php';
 
+$usertable = "employees";
 $errors = [];
-$success = '';
-$result = null;
-$lastnameFilter = '';
+$mode   = '';   // search | confirm | done
+$row    = null;
 
-// Якщо прийшов POST з eid — видаляємо
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eid'])) {
-    $eid = $_POST['eid'];
-    if (!ctype_digit($eid)) {
-        $errors[] = "Некоректний ідентифікатор.";
+// 1) Якщо прийшов GET pid → показуємо форму підтвердження
+if (isset($_GET['pid']) && trim($_GET['pid']) !== '' && ctype_digit($_GET['pid'])) {
+    $idv = (int)$_GET['pid'];
+
+    $sql = "SELECT EmployeeID, LastName, FirstName, Phone, PhotoFile
+            FROM $usertable
+            WHERE EmployeeID = ?";
+    $stmt = mysqli_prepare($dbc, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $idv);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $row = mysqli_fetch_assoc($res);
+    mysqli_stmt_close($stmt);
+
+    if ($row) {
+        $mode = 'confirm';
     } else {
-        $idv = (int)$eid;
-        $sql = "DELETE FROM EMPLOYEES WHERE EmployeeID = ? LIMIT 1";
-        $stmt = mysqli_prepare($dbc, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $idv);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-        $success = "Запис видалено (якщо існував).";
+        $errors[] = "Запис не знайдено.";
     }
 }
-
-// Якщо POST з lastname — шукаємо
-if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
-    isset($_POST['lastname']) &&
-    $_POST['lastname'] !== '' &&
-    !isset($_POST['eid'])) {
-
-    $lastnameFilter = trim($_POST['lastname']);
-    if ($lastnameFilter === '' || mb_strlen($lastnameFilter) < 2) {
-        $errors[] = "Введіть коректне прізвище для пошуку.";
+// 2) Якщо прийшов POST із eid → реально видаляємо
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eid'])) {
+    if (!ctype_digit($_POST['eid'])) {
+        $errors[] = "Некоректний ідентифікатор.";
     } else {
-        $like = '%' . $lastnameFilter . '%';
-        $sql = "SELECT EmployeeID, LastName, FirstName, Position
-                FROM EMPLOYEES
+        $idv = (int)$_POST['eid'];
+        $sql = "DELETE FROM $usertable WHERE EmployeeID = ? LIMIT 1";
+        $stmt = mysqli_prepare($dbc, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $idv);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        $mode = 'done';
+    }
+}
+// 3) Якщо прийшов POST з прізвищем → шукаємо
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lastname'])) {
+    $lastname = trim($_POST['lastname']);
+    if ($lastname === '' || mb_strlen($lastname) < 2) {
+        $errors[] = "Введіть прізвище (мінімум 2 символи).";
+    } else {
+        $like = '%' . $lastname . '%';
+        $sql = "SELECT EmployeeID, LastName, FirstName, Phone
+                FROM $usertable
                 WHERE LastName LIKE ?";
         $stmt = mysqli_prepare($dbc, $sql);
-        mysqli_stmt_bind_param($stmt, 's', $like);
+        mysqli_stmt_bind_param($stmt, "s", $like);
         mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $rows = [];
+        while ($r = mysqli_fetch_assoc($res)) {
+            $rows[] = $r;
+        }
+        mysqli_stmt_close($stmt);
+        $mode = 'search';
     }
 }
 ?>
@@ -47,19 +69,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
 <html lang="uk">
 <head>
     <meta charset="utf-8">
-    <title>Видалити співробітника</title>
+    <title>Вилучення даних</title>
 </head>
 <body>
 <?php include 'menu.php'; ?>
 
-<h3>Видалення співробітника</h3>
-
-<form method="post" action="form3.php">
-    <b>Введіть прізвище співробітника для пошуку:</b><br>
-    <input type="text" name="lastname" size="30" required minlength="2"
-           value="<?php echo htmlspecialchars($lastnameFilter); ?>">
-    <input type="submit" value="Знайти">
-</form>
+<h3>Вилучення співробітника</h3>
 
 <?php if ($errors): ?>
     <div style="color:red;">
@@ -67,30 +82,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
     </div>
 <?php endif; ?>
 
-<?php if ($success): ?>
-    <p style="color:green;"><?php echo $success; ?></p>
+<!-- форма пошуку за прізвищем -->
+<form action="form3.php" method="post">
+    <b>Введіть прізвище співробітника для вилучення:</b><br>
+    <input type="text" name="lastname" size="30" required minlength="2">
+    <input type="submit" value="Шукати">
+</form>
+
+<hr>
+
+<?php if ($mode === 'search'): ?>
+    <?php if (empty($rows)): ?>
+        <p>Немає такого запису.</p>
+    <?php else: ?>
+        <p>Знайдено записів: <?php echo count($rows); ?></p>
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr><th>Прізвище</th><th>Ім’я</th><th>Телефон</th><th>Дія</th></tr>
+            <?php foreach ($rows as $r): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($r['LastName']); ?></td>
+                    <td><?php echo htmlspecialchars($r['FirstName']); ?></td>
+                    <td><?php echo htmlspecialchars($r['Phone']); ?></td>
+                    <td>
+                        <a href="form3.php?pid=<?php echo (int)$r['EmployeeID']; ?>">Вилучити</a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+    <?php endif; ?>
 <?php endif; ?>
 
-<?php if ($result): ?>
-    <h4>Результати пошуку:</h4>
-    <table border="1" cellpadding="5" cellspacing="0">
-        <tr><th>Прізвище</th><th>Ім’я</th><th>Посада</th><th>Дія</th></tr>
-        <?php while ($row = mysqli_fetch_assoc($result)): ?>
-            <tr>
-                <td><?php echo htmlspecialchars($row['LastName']); ?></td>
-                <td><?php echo htmlspecialchars($row['FirstName']); ?></td>
-                <td><?php echo htmlspecialchars($row['Position']); ?></td>
-                <td>
-                    <form method="post" action="form3.php"
-                          onsubmit="return confirm('Ви дійсно хочете видалити цього співробітника?');">
-                        <input type="hidden" name="eid"
-                               value="<?php echo (int)$row['EmployeeID']; ?>">
-                        <input type="submit" value="Видалити">
-                    </form>
-                </td>
-            </tr>
-        <?php endwhile; ?>
-    </table>
+<?php if ($mode === 'confirm' && $row): ?>
+    <h4>Підтвердження вилучення</h4>
+    <p>Ви дійсно хочете вилучити співробітника:
+        <strong><?php echo htmlspecialchars($row['LastName'] . ' ' . $row['FirstName']); ?></strong>?</p>
+
+    <form method="post" action="form3.php"
+          onsubmit="return confirm('Підтвердити вилучення запису?');">
+        <input type="hidden" name="eid" value="<?php echo (int)$row['EmployeeID']; ?>">
+        <input type="submit" value="Вилучити">
+    </form>
+<?php endif; ?>
+
+<?php if ($mode === 'done'): ?>
+    <p style="color:green;">Запис вилучено (якщо він існував).</p>
 <?php endif; ?>
 
 </body>
