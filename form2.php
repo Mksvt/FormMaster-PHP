@@ -61,7 +61,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <td><?php echo htmlspecialchars($row['Position']); ?></td>
                     <td><?php echo htmlspecialchars($row['Phone']); ?></td>
                     <td><?php echo htmlspecialchars($row['Email']); ?></td>
-                    <td><?php echo htmlspecialchars($row['PhotoFile']); ?></td>
+                    <td>
+                <?php if (!empty($row['PhotoFile'])): ?>
+                    <img src="uploads/<?php echo htmlspecialchars($row['PhotoFile']); ?>" height="60">
+                <?php else: ?>
+                    (нема фото)
+                <?php endif; ?>
+            </td>
                 </tr>
             <?php endwhile; ?>
         </table>

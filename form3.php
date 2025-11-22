@@ -11,7 +11,7 @@ $row    = null;
 if (isset($_GET['pid']) && trim($_GET['pid']) !== '' && ctype_digit($_GET['pid'])) {
     $idv = (int)$_GET['pid'];
 
-    $sql = "SELECT EmployeeID, LastName, FirstName, Phone, PhotoFile
+    $sql = "SELECT EmployeeID, LastName, FirstName, Phone, PhotoFile, is_active
             FROM $usertable
             WHERE EmployeeID = ?";
     $stmt = mysqli_prepare($dbc, $sql);
@@ -27,19 +27,33 @@ if (isset($_GET['pid']) && trim($_GET['pid']) !== '' && ctype_digit($_GET['pid']
         $errors[] = "Запис не знайдено.";
     }
 }
-// 2) Якщо прийшов POST із eid → реально видаляємо
+// 2) Якщо прийшов POST із eid → спочатку робимо is_active = 0, потім DELETE
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eid'])) {
     if (!ctype_digit($_POST['eid'])) {
         $errors[] = "Некоректний ідентифікатор.";
     } else {
         $idv = (int)$_POST['eid'];
-        $sql = "DELETE FROM $usertable WHERE EmployeeID = ? LIMIT 1";
+
+        // 2.1. Переводимо співробітника у неактивні
+        $sql = "UPDATE $usertable SET is_active = 0 WHERE EmployeeID = ?";
         $stmt = mysqli_prepare($dbc, $sql);
         mysqli_stmt_bind_param($stmt, "i", $idv);
         mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
 
-        $mode = 'done';
+        // 2.2. Видаляємо запис (тригер пропустить, бо is_active вже 0)
+        $sql = "DELETE FROM $usertable WHERE EmployeeID = ? LIMIT 1";
+        $stmt = mysqli_prepare($dbc, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $idv);
+
+        try {
+            mysqli_stmt_execute($stmt);
+            $mode = 'done';
+        } catch (mysqli_sql_exception $e) {
+            $errors[] = "Помилка при вилученні: " . $e->getMessage();
+        }
+
+        mysqli_stmt_close($stmt);
     }
 }
 // 3) Якщо прийшов POST з прізвищем → шукаємо
@@ -116,6 +130,10 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lastname'])) {
     <h4>Підтвердження вилучення</h4>
     <p>Ви дійсно хочете вилучити співробітника:
         <strong><?php echo htmlspecialchars($row['LastName'] . ' ' . $row['FirstName']); ?></strong>?</p>
+    <p>Статус: 
+        <?php echo ($row['is_active'] == 1) ? "<span style='color:green;'>активний</span>" 
+                                            : "<span style='color:gray;'>неактивний</span>"; ?>
+    </p>
 
     <form method="post" action="form3.php"
           onsubmit="return confirm('Підтвердити вилучення запису?');">
@@ -125,7 +143,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lastname'])) {
 <?php endif; ?>
 
 <?php if ($mode === 'done'): ?>
-    <p style="color:green;">Запис вилучено (якщо він існував).</p>
+    <p style="color:green;">Запис переведено в неактивні та вилучено.</p>
 <?php endif; ?>
 
 </body>
