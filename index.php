@@ -59,14 +59,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' &&
     <title>ЛР4 – Головна</title>
     <style>
         body { font-family: Arial, sans-serif; margin:20px; }
-        .nav { list-style:none; margin:0; padding:0; overflow:hidden; background:#333; }
-        .nav li { float:left; }
-        .nav li a { display:block; padding:10px 16px; color:#fff; text-decoration:none; }
-        .nav li a:hover { background:#555; }
-        table { border-collapse:collapse; margin-top:15px; }
-        th, td { border:1px solid #ccc; padding:6px 10px; }
-        th { background:#eee; }
-        .error { color:red; }
+        table { border-collapse:collapse; margin-top:15px; border: 1px solid #000; }
+        th, td { border:1px solid #000; padding:6px 10px; }
+        th { font-weight: bold; }
+        .error { font-weight: bold; }
+        input[type="text"] { padding: 8px; border: 1px solid #000; }
+        button { padding: 8px 16px; border: 1px solid #000; background: #fff; cursor: pointer; }
+        button:hover { background: #eee; }
     </style>
 </head>
 <body>

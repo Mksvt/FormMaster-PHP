@@ -8,20 +8,21 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #333;
+            border-bottom: 2px solid #000;
         }
         li {
             float: left;
         }
         li a {
             display: block;
-            color: white;
+            color: #000;
             text-align: center;
             padding: 14px 16px;
             text-decoration: none;
+            border-right: 1px solid #000;
         }
         li a:hover {
-            background-color: #111;
+            background-color: #eee;
         }
         .clearfix::after {
             content: "";
@@ -33,12 +34,10 @@
 <body>
 <ul class="clearfix">
     <li><a href="index.php">Головна</a></li>
-    <li><a href="form1.html">Додати співробітника</a></li>
-    <li><a href="form2.html">Пошук співробітника</a></li>
-    <li><a href="form2prepare.php">Пошук (prepared)</a></li>
-    <li><a href="form3.php">Видалити співробітника</a></li>
-    <li><a href="form4.html">Редагувати співробітника</a></li>
-    <li><a href="form5.php">Перегляд співробітників</a></li>
+    <li><a href="search.php">Пошук</a></li>
+    <li><a href="clients.php">Клієнти</a></li>
+    <li><a href="objects.php">Об'єкти</a></li>
+    <li><a href="orders.php">Замовлення</a></li>
 </ul>
 </body>
 </html>
