@@ -142,7 +142,7 @@ $totalResults = count($results['clients']) + count($results['objects']) + count(
 
         <?php if ($totalResults === 0): ?>
             <div class="no-results">
-                <h3>😔 Нічого не знайдено</h3>
+                <h3>Нічого не знайдено</h3>
                 <p>Спробуйте змінити пошуковий запит або оберіть іншу категорію</p>
             </div>
         <?php endif; ?>

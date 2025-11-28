@@ -77,15 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' &&
 
 <h4>Дані з подання V_OrdersDashboard (ЛР3)</h4>
 
-<form method="get" action="index.php">
-    <label>Пошук замовлень по клієнту (частина назви):</label><br>
-    <input type="text" name="client"
-           required minlength="2" maxlength="50"
-           pattern="[A-Za-zА-Яа-яІіЇїЄє0-9\s\.]+"
-           value="<?php echo htmlspecialchars($clientFilter, ENT_QUOTES, 'UTF-8'); ?>">
-    <button type="submit">Шукати</button>
-</form>
-
 <?php if ($searchError): ?>
     <p class="error"><?php echo $searchError; ?></p>
 <?php endif; ?>

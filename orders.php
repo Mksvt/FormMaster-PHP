@@ -8,10 +8,15 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $orderDate = trim($_POST['OrderDate'] ?? '');
     $orderAmount = trim($_POST['OrderAmount'] ?? '');
-    $orderStatus = $_POST['OrderStatus'] ?? '';
+    $orderStatus = trim($_POST['OrderStatus'] ?? '');
     $clientID = $_POST['ClientID'] ?? null;
     $objID = $_POST['ObjID'] ?? null;
     $orderID = $_POST['OrderID'] ?? null;
+
+    // Конвертуємо порожні рядки в NULL
+    $orderStatus = ($orderStatus === '') ? null : $orderStatus;
+    $clientID = (empty($clientID) || $clientID === '') ? null : $clientID;
+    $objID = (empty($objID) || $objID === '') ? null : $objID;
 
     // Валідація
     if (empty($orderDate) || empty($orderAmount)) {

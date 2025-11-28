@@ -11,12 +11,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $taxCode = trim($_POST['TaxCode'] ?? '');
     $clientID = $_POST['ClientID'] ?? null;
 
+    // Конвертуємо порожні рядки в NULL
+    $email = ($email === '') ? null : $email;
+    $taxCode = ($taxCode === '') ? null : $taxCode;
+
     // Валідація
     if (empty($clientName) || strlen($clientName) < 2) {
         $error = "Назва клієнта обов'язкова (мінімум 2 символи)!";
-    } elseif (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    } elseif ($email !== null && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Невірний формат email!";
-    } elseif (!empty($taxCode) && !preg_match('/^[0-9]{8,12}$/', $taxCode)) {
+    } elseif ($taxCode !== null && !preg_match('/^[0-9]{8,12}$/', $taxCode)) {
         $error = "Податковий код має містити 8-12 цифр!";
     } else {
         if ($clientID && is_numeric($clientID)) {

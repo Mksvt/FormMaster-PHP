@@ -10,9 +10,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address = trim($_POST['Address'] ?? '');
     $startDate = $_POST['StartDate'] ?? null;
     $endDate = $_POST['EndDate'] ?? null;
-    $status = $_POST['Status'] ?? '';
+    $status = trim($_POST['Status'] ?? '');
     $clientID = $_POST['ClientID'] ?? null;
     $objID = $_POST['ObjID'] ?? null;
+
+    // Конвертуємо порожні рядки в NULL
+    $address = ($address === '') ? null : $address;
+    $startDate = (empty($startDate) || $startDate === '') ? null : $startDate;
+    $endDate = (empty($endDate) || $endDate === '') ? null : $endDate;
+    $status = ($status === '') ? null : $status;
+    $clientID = (empty($clientID) || $clientID === '') ? null : $clientID;
 
     // Валідація дат
     $dateError = false;
@@ -105,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $sql = "INSERT INTO objects (ObjectName, Address, StartDate, EndDate, Status, ClientID, Photo) VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = mysqli_prepare($dbc, $sql);
-            mysqli_stmt_bind_param($stmt, 'ssssssi', $objectName, $address, $startDate, $endDate, $status, $clientID, $photoPath);
+            mysqli_stmt_bind_param($stmt, 'sssssis', $objectName, $address, $startDate, $endDate, $status, $clientID, $photoPath);
             if (mysqli_stmt_execute($stmt)) {
                 $message = "Об'єкт успішно додано!";
             } else {
@@ -177,7 +184,15 @@ $clientsResult = mysqli_query($dbc, "SELECT ClientID, ClientName FROM clients OR
         }
         .search-box { margin: 20px 0; }
         .search-box input { width: 300px; display: inline-block; }
-        .photo-preview { max-width: 100px; max-height: 100px; border: 1px solid #000; }
+        .photo-preview { 
+            max-width: 100px; 
+            max-height: 100px; 
+            width: auto;
+            height: auto;
+            border: 1px solid #000; 
+            display: block;
+            object-fit: cover;
+        }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     </style>
 </head>
